@@ -17,16 +17,11 @@
 
 
 // wiring
-#define GPIO_VALVE1       D0   // (D2)
-#define GPIO_VALVE2       D5   // (D1)
-#define GPIO_VALVE3       D6  // (D5)
-#define GPIO_VALVE4       D7  // (D8)
-#define GPIO_PUMP         D8  // (D7)
 #define GPIO_FLOWMETER    D1  // (D6)
 
 // i2c port expander
 #define PCF8574_SDA       D2
-#define PCF8574_SCL       D1
+#define PCF8574_SCL       D3
 #define PCF8574_I2CADDR   32
 #define PCF8574_PORT_PUMP 0
 
@@ -177,6 +172,10 @@ void eeprom_save_config() {
 void setup() {
 
   setup_pcf8574();
+  pinMode( GPIO_FLOWMETER, INPUT_PULLUP );
+  attachInterrupt(GPIO_FLOWMETER, inc_flowcount, RISING);
+  sei();
+
 
   Serial.begin( SERIAL_BAUD );
   EEPROM.begin( sizeof( eeprom_config ) + CONFIG_START );

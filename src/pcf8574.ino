@@ -20,14 +20,15 @@ void setup_pcf8574(){
   Wire.begin(PCF8574_SDA, PCF8574_SCL);
   Wire.setClock(1000);
   Wire.beginTransmission(PCF8574_I2CADDR);
-  Wire.write(pcf8574_state);
+  pcf8574_null();
+  Wire.write(~pcf8574_state);
   Wire.endTransmission();
 }
 
 // send current state to module
 void pcf8574_update(){
   Wire.beginTransmission(PCF8574_I2CADDR);
-  Wire.write(pcf8574_state);
+  Wire.write(~pcf8574_state);
   Wire.endTransmission();
 }
 
@@ -43,7 +44,11 @@ void pcf8574_set_port(uint8_t portnum, boolean state){
 
 // turn off all ports
 void pcf8574_null(){
-  pcf8574_state=0;
+  for (uint8_t i = 0; i<8;i++){
+    pcf8574_set_port(i, false);
+  }
+
+  //pcf8574_state=0;
 }
 
 // read state

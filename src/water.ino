@@ -35,7 +35,7 @@ boolean water(uint8_t valve, uint32_t amount_ml ){
   // 4550 impulses/litre
   pump_run_until = (amount_ml * 4.55);
   // valve mapped from port 2 to 8 (1=pump, 2=reserved)
-  current_active_valve = valve+2;
+  current_active_valve = valve+1;
 
   if (eeprom_config.debug_output_enabled){
     Serial.print("start routing, valve=");
