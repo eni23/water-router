@@ -66,7 +66,6 @@ struct eeprom_config_struct {
 };
 
 
-// if true, debug("foo") prints line on serial port
 
 bool pump_is_running = false;
 uint8_t current_active_valve = 0;
@@ -76,25 +75,34 @@ uint32_t flow_counter;
 EspClass esp;
 ESP8266WebServer *server;
 
-//NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> led(1, WS2811_PORT);
+// rgb led stuff
 NeoPixelBus led = NeoPixelBus(1, GPIO_WS2811);
+RgbColor led_color_blue = RgbColor( 0, 0, 255);
+RgbColor led_color_red = RgbColor( 0, 255, 0);
+RgbColor led_color_green = RgbColor( 255, 0, 0);
 
+
+// timer stuff
 SimpleTimer timer;
-boolean led_enabled = false;
-boolean led_blink_on = false;
-int timerId;
-RgbColor led_color = RgbColor(0, 0, 0);
 
 
 /**
  * connect to wifi. if reconnect is true, connection is closed first
  **/
+void wifi_init(){
+  led_timeout_ui(RgbColor(150,0,0),60);
+  debug( "wifi init" );
+  WiFi.begin( eeprom_config.wifi_ssid, eeprom_config.wifi_pass );
+  wifi_set_static_if_enabled();
+}
+
 void wifi_connect( bool reconnect = false ) {
   if ( reconnect ) {
     debug( "auto: stop wifi" );
     WiFi.disconnect();
     delay( 100 );
   }
+  led_timeout_ui(RgbColor(0,120,80),60);
   debug( "auto: connecting to wifi" );
   WiFi.begin( eeprom_config.wifi_ssid, eeprom_config.wifi_pass );
   wifi_set_static_if_enabled();
@@ -181,44 +189,18 @@ void eeprom_save_config() {
 
 
 
-void blink_led(){
-    if (led_enabled){
-      if (led_blink_on){
-        //RgbColor lcol(0,0,200);
-        led.SetPixelColor(0, led_color);
-        led.Show();
-        led_blink_on = false;
-      }
-      else {
-        //RgbColor lcol(0,0,0);
-        led.SetPixelColor(0, RgbColor(0,0,0));
-        led.Show();
-        led_blink_on = true;
-      }
-    }
-}
-
-void led_off(){
-  led.SetPixelColor(0, RgbColor(0,0,0));
-  led.Show();
-}
 
 
-boolean lock_btn = false;
 
 void push_button(){
 
-  if (lock_btn){
-    return;
-  }
-  lock_btn = true;
   if ( pump_is_running ){
     stop_water();
-    led.SetPixelColor(0, RgbColor(0,200,0));
-    led.Show();
-    timer.setTimeout(500, led_off);
+    led_timeout(led_color_red, 600);
   }
-  lock_btn = false;
+  else {
+    led_blink_times(RgbColor(0,100,0), 100, 2);
+  }
 }
 
 
@@ -235,8 +217,7 @@ void setup() {
   attachInterrupt( GPIO_BUTTON, push_button, RISING);
   sei();
 
-  led.Begin();
-  led.Show();
+  led_init();
 
   Serial.begin( SERIAL_BAUD );
   EEPROM.begin( sizeof( eeprom_config ) + CONFIG_START );
@@ -244,11 +225,10 @@ void setup() {
   // load settings from eeprom to struct eeprom_config
   eeprom_load_config();
   // connect to wifi
-  wifi_connect();
+  wifi_init();
   delay(1000);
   server_setup();
 
-  timer.setInterval(550, blink_led);
 }
 
 

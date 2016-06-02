@@ -108,22 +108,11 @@ void serial_process_input() {
 
   if ( command == "stop" ){
     stop_water();
-    led.SetPixelColor(0, RgbColor(0,200,0));
-    led.Show();
-    timer.setTimeout(500, led_off);
     debug("ok");
+    led_timeout(led_color_red, 600);
     return;
   }
 
-  if ( command == "led-on" ){
-    led_enabled = true;
-    return;
-  }
-
-  if ( command == "led-off" ){
-    led_enabled = false;
-    return;
-  }
 
   // update wifi settings
   if ( command == "update-wifi" ) {

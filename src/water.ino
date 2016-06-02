@@ -22,7 +22,7 @@ void stop_water(){
   debug("watering done");
   pump_is_running = false;
   flow_counter = 0;
-  led_enabled = false;
+  led_blink_stop();
 }
 
 // valve: valve starting with 1, highest 6
@@ -60,11 +60,7 @@ boolean water(uint8_t valve, uint32_t amount_ml ){
   pcf8574_update();
   pump_is_running = true;
 
-  // hacky but works for now
-  led_color = RgbColor(0,0,200);
-  led.SetPixelColor(0, led_color);
-  led.Show();
-  led_enabled = true;
+  led_blink(led_color_blue, 500);
 
   return true;
 }
