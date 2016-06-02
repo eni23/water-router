@@ -14,16 +14,23 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <Wire.h>
+#include <NeoPixelBus.h>
+#include <SimpleTimer.h>
 
 
 // wiring
-#define GPIO_FLOWMETER    D1  // (D6)
+#define GPIO_FLOWMETER    D6  // (D6)
 
 // i2c port expander
 #define PCF8574_SDA       D2
-#define PCF8574_SCL       D3
+#define PCF8574_SCL       D1
 #define PCF8574_I2CADDR   32
 #define PCF8574_PORT_PUMP 0
+
+// button & led
+#define GPIO_WS2811       D7
+#define GPIO_BUTTON       D8
+
 
 // serial port baudrate
 #define SERIAL_BAUD 115200
@@ -68,6 +75,16 @@ uint32_t flow_counter;
 
 EspClass esp;
 ESP8266WebServer *server;
+
+//NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> led(1, WS2811_PORT);
+NeoPixelBus led = NeoPixelBus(1, GPIO_WS2811);
+
+SimpleTimer timer;
+boolean led_enabled = false;
+boolean led_blink_on = false;
+int timerId;
+RgbColor led_color = RgbColor(0, 0, 0);
+
 
 /**
  * connect to wifi. if reconnect is true, connection is closed first
@@ -164,6 +181,45 @@ void eeprom_save_config() {
 
 
 
+void blink_led(){
+    if (led_enabled){
+      if (led_blink_on){
+        //RgbColor lcol(0,0,200);
+        led.SetPixelColor(0, led_color);
+        led.Show();
+        led_blink_on = false;
+      }
+      else {
+        //RgbColor lcol(0,0,0);
+        led.SetPixelColor(0, RgbColor(0,0,0));
+        led.Show();
+        led_blink_on = true;
+      }
+    }
+}
+
+void led_off(){
+  led.SetPixelColor(0, RgbColor(0,0,0));
+  led.Show();
+}
+
+
+boolean lock_btn = false;
+
+void push_button(){
+
+  if (lock_btn){
+    return;
+  }
+  lock_btn = true;
+  if ( pump_is_running ){
+    stop_water();
+    led.SetPixelColor(0, RgbColor(0,200,0));
+    led.Show();
+    timer.setTimeout(500, led_off);
+  }
+  lock_btn = false;
+}
 
 
 /**
@@ -174,8 +230,13 @@ void setup() {
   setup_pcf8574();
   pinMode( GPIO_FLOWMETER, INPUT_PULLUP );
   attachInterrupt(GPIO_FLOWMETER, inc_flowcount, RISING);
+
+  pinMode( GPIO_BUTTON, INPUT_PULLUP);
+  attachInterrupt( GPIO_BUTTON, push_button, RISING);
   sei();
 
+  led.Begin();
+  led.Show();
 
   Serial.begin( SERIAL_BAUD );
   EEPROM.begin( sizeof( eeprom_config ) + CONFIG_START );
@@ -186,6 +247,8 @@ void setup() {
   wifi_connect();
   delay(1000);
   server_setup();
+
+  timer.setInterval(550, blink_led);
 }
 
 
@@ -216,4 +279,5 @@ void loop() {
   loop_ticks++;
   server->handleClient();
   delay(1);
+  timer.run();
 }

@@ -104,9 +104,26 @@ void serial_process_input() {
 
     water(valve, amount);
     return;
-
   }
 
+  if ( command == "stop" ){
+    stop_water();
+    led.SetPixelColor(0, RgbColor(0,200,0));
+    led.Show();
+    timer.setTimeout(500, led_off);
+    debug("ok");
+    return;
+  }
+
+  if ( command == "led-on" ){
+    led_enabled = true;
+    return;
+  }
+
+  if ( command == "led-off" ){
+    led_enabled = false;
+    return;
+  }
 
   // update wifi settings
   if ( command == "update-wifi" ) {
