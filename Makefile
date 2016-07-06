@@ -1,4 +1,4 @@
-# this is may the ugliest makefile you've ever seen
+# this is maybe the ugliest makefile you've ever seen
 
 PROJECT_DIR			= $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 FQBN 						= esp8266:esp8266:d1_mini:CpuFrequency=80,UploadSpeed=921600,FlashSize=4M3M
