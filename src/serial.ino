@@ -109,7 +109,7 @@ void serial_process_input() {
   if ( command == "stop" ){
     stop_water();
     debug("ok");
-    led_timeout(led_color_red, 600);
+    led_timeout(led_color_red, 1000);
     return;
   }
 

@@ -8,7 +8,7 @@
  * Website: https://github.com/esp8266/Arduino
  *
  ******************************************************************************/
-
+#include <Arduino.h>
 #include <string.h>
 #include <EEPROM.h>
 #include <ESP8266WiFi.h>
@@ -26,6 +26,13 @@
 #define PCF8574_SCL       D1
 #define PCF8574_I2CADDR   32
 #define PCF8574_PORT_PUMP 0
+
+//mic5891
+#define MIC_OUTPUT_ENABLE 2
+#define MIC_STROBE        3
+#define MIC_CLOCK         4
+#define MIC_DATA          5
+
 
 // button & led
 #define GPIO_WS2811       D7
@@ -87,15 +94,19 @@ SimpleTimer timer;
 
 
 /**
- * connect to wifi. if reconnect is true, connection is closed first
+ * init wifi (connect)
  **/
 void wifi_init(){
+  // since this is during startup, timer will run for aprox. 1000ms
   led_timeout_ui(RgbColor(150,0,0),60);
   debug( "wifi init" );
   WiFi.begin( eeprom_config.wifi_ssid, eeprom_config.wifi_pass );
   wifi_set_static_if_enabled();
 }
 
+/**
+ * connect to wifi. if reconnect is true, connection is closed first
+ **/
 void wifi_connect( bool reconnect = false ) {
   if ( reconnect ) {
     debug( "auto: stop wifi" );
@@ -196,10 +207,10 @@ void push_button(){
 
   if ( pump_is_running ){
     stop_water();
-    led_timeout(led_color_red, 600);
+    led_timeout(led_color_red, 1000);
   }
   else {
-    led_blink_times(RgbColor(0,100,0), 100, 2);
+    led_blink_times(RgbColor(30,100,0), 100, 2);
   }
 }
 
