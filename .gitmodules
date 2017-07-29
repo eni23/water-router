@@ -1,0 +1,3 @@
+[submodule "src/serial-term"]
+	path = src/serial-term
+	url = git@github.com:eni23/serial-term.git

@@ -1,3 +1,21 @@
+#include <Arduino.h>
+#include <config.h>
+
+#include <SimpleTimer.h>
+#include <NeoPixelBus.h>
+#include "led.h"
+
+
+// timer stuff
+SimpleTimer timer;
+
+// rgb led stuff
+NeoPixelBus led = NeoPixelBus(1, GPIO_WS2811);
+RgbColor led_color_blue = RgbColor( 0, 0, 255);
+RgbColor led_color_red = RgbColor( 0, 255, 0);
+RgbColor led_color_green = RgbColor( 255, 0, 0);
+
+
 boolean led_blink_state = true;
 boolean led_blink_enabled = false;
 RgbColor led_blink_color = RgbColor(0, 0, 0);
@@ -16,6 +34,17 @@ void led_set( RgbColor color ){
 void led_off(){
   led.SetPixelColor(0, RgbColor(0,0,0));
   led.Show();
+}
+
+void led_blink_cycle( ){
+  if (led_blink_state){
+    led_set(led_blink_color);
+    led_blink_state = false;
+  }
+  else {
+    led_off();
+    led_blink_state=true;
+  }
 }
 
 
@@ -37,16 +66,6 @@ void led_blink_stop(){
   led_blink_enabled = false;
 }
 
-void led_blink_cycle( ){
-  if (led_blink_state){
-    led_set(led_blink_color);
-    led_blink_state = false;
-  }
-  else {
-    led_off();
-    led_blink_state=true;
-  }
-}
 
 
 void led_timeout( RgbColor color, int time ){
