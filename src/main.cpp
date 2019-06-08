@@ -1,68 +1,99 @@
-/*******************************************************************************
- *
- * WaterRouter Wifi Firmware
- *
- * Author: Cyrill vW. < eni@e23.ch >
- *
- * This file needs to be compiled with Arduino-esp8266,
- * Website: https://github.com/esp8266/Arduino
- *
- ******************************************************************************/
 #include <Arduino.h>
-#include "led.h"
-#include "eeprom.h"
-#include "term.h"
-#include "wifi.h"
+#include "config.h"
+#include "water.h"
+#include <TimerOne.h>
 
 
 
-void push_button(){
-  led_off();
-  led_blink_stop();
-  term.debug("BTN pushed");
-  led_blink_times(RgbColor(0,100,0), 100, 2);
-}
+// struct serial_wr_message {
+//   uint8_t addr;
+//   uint8_t valve;
+//   uint32_t amount_ml;
+//   uint8_t crc;
+// };
+//
+// void send_struct(const serial_wr_message* data){
+//   Serial.write((const char*)data, sizeof(serial_wr_message));
+// }
+//
+// bool receive_struct(serial_wr_message* data){
+//   return (
+//     Serial1.readBytes((char*)data,
+//     sizeof(serial_wr_message)) == sizeof(serial_wr_message)
+//   );
+// }
+
+
+
+
+String serial_data;
+
 
 
 /**
- * arduino-init function
- **/
+* split a string and get chuck at desired position
+* example:
+* data="foo,bar,baz" separator="," index=2  => baz
+* data="foo/bar" separator="/" index=0  => foo
+**/
+String str_token( String data, char separator, int index ) {
+  int found = 0;
+  int strIndex[] = { 0, -1 };
+  int maxIndex = data.length()-1;
+  for( int i = 0; i <= maxIndex && found <= index; i++ ){
+    if( data.charAt( i ) == separator || i == maxIndex ){
+      found++;
+      strIndex[0] = strIndex[1] + 1;
+      strIndex[1] = ( i == maxIndex ) ? i + 1 : i;
+    }
+  }
+  return found > index ? data.substring( strIndex[0], strIndex[1] ) : "";
+}
+
+String strArg(int index){
+  return str_token(serial_data, ' ', index);
+}
+
+int intArg(int index){
+  String s_str = "";
+  s_str = strArg( index );
+  int s;
+  s = s_str.toInt();
+  return s;
+}
+
+
+
+
 void setup() {
-
-  //pinMode( GPIO_FLOWMETER, INPUT_PULLUP );
-  //attachInterrupt(GPIO_FLOWMETER, inc_flowcount, RISING);
-
-  pinMode( GPIO_BUTTON, INPUT_PULLUP);
-  attachInterrupt( GPIO_BUTTON, push_button, RISING);
-  sei();
-
-  led_init();
-
-  eeprom_init();
-  delay( 50 );
-  // load settings from eeprom to struct eeprom_config
-  eeprom_load_config();
-  init_term();
-
-  // connect to wifi
-  wifi_init();
-  //delay(1000);
-  //server_setup();
-
+  Serial.begin(19200);
+  Serial1.begin(SERIAL1_BAUD);
+  Serial1.setTimeout(400);
+  water_init();
 }
-
-
-/**
- * arduino-main entry point after setup()
- **/
 
 
 void loop() {
-  // if wifi isn't connected, reconnect. non-blocking, re-try every 20sec
-  wifi_reconnect_loop();
+  if (Serial1.available()) {
+    serial_data = Serial1.readStringUntil("\0");
+    String cmd = str_token(serial_data, ' ', 0);
+    if (cmd == "WTR1"){
+      int s_valve = intArg(1);
+      int s_amount = intArg(2);
 
-  //server->handleClient();
-  delay(1);
-  timer.run();
-  term.run();
+      Serial.print("start water, valve=");
+      Serial.print(s_valve);
+      Serial.print(" amount=");
+      Serial.println(s_amount);
+
+      water(s_valve, s_amount);
+    }
+
+    if (cmd == "WTR0"){
+      Serial.println("stop water");
+      stop_water();
+    }
+
+
+  }
 }

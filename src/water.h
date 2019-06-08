@@ -1,10 +1,5 @@
-#include "mic5891.cpp"
-
 #ifndef __WATER_H
   #define __WATER_H
-
-
-extern MIC5891 mic5891;
 
 extern bool pump_is_running;
 extern uint8_t current_active_valve;
@@ -19,5 +14,6 @@ extern void stop_water();
 
 extern bool water(uint8_t valve, uint32_t amount_ml );
 
+void set_null();
 
 #endif
