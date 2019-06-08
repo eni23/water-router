@@ -10,7 +10,8 @@
   #define GPIO_VALVES           15, 14, 16, 10
 
   // serial baud
-  #define SERIAL1_BAUD          19200
+  // common values are: 4800, 9600, 14400, 19200, 38400, 57600, 115200, 128000 and 256000
+  #define SERIAL1_BAUD          57600
 
 
   #define DEGUB_ENABLED         1

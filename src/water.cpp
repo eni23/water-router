@@ -4,6 +4,7 @@
 
 
 const uint8_t VALVES[VALVE_COUNT] = { GPIO_VALVES };
+void set_null();
 
 bool pump_is_running = false;
 uint8_t current_active_valve = 0;
