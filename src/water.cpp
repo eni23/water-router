@@ -13,8 +13,11 @@ uint32_t flow_counter;
 
 void water_init(){
   pinMode( GPIO_FLOWMETER, INPUT_PULLUP );
+  pinMode( GPIO_BUTTON, INPUT_PULLUP );
   pinMode( GPIO_PUMP, OUTPUT );
   attachInterrupt(digitalPinToInterrupt(GPIO_FLOWMETER), inc_flowcount, RISING);
+  attachInterrupt(digitalPinToInterrupt(GPIO_BUTTON), btn_isr, FALLING);
+
   for ( uint8_t i=0; i<VALVE_COUNT; i++){
     pinMode(VALVES[i], OUTPUT );
   }
@@ -35,6 +38,14 @@ void inc_flowcount() {
   }
 }
 
+void btn_isr(){
+  if (!pump_is_running){
+    return;
+  }
+  Serial.print("pulses was=");
+  Serial.println(flow_counter);
+  stop_water();
+}
 
 void stop_water(){
   set_null();
@@ -51,21 +62,12 @@ bool water(uint8_t valve, uint32_t amount_ml ){
     return false;
   }
 
-  // 4550 impulses/liter
-  //pump_run_until = (amount_ml * 4.55);
+  // 1.098 impulses/liter
+  // plus calib value (extra steps to run for hose looses)
+  pump_run_until = (amount_ml * 1.098)+PUMP_CAL;
 
-  // 1137 impulses/liter
-  pump_run_until = (amount_ml * 1.11);
-  if (amount_ml<25){
-    pump_run_until+=3;
-  } else if (amount_ml<50){
-    pump_run_until+=2;
-  } else if (amount_ml>100){
-    int corr_min  = ((amount_ml/200)*10);
-    Serial.print("corr minus=");
-    Serial.println(corr_min);
-    pump_run_until-=corr_min;
-  }
+  Serial.print("num_pulses=");
+  Serial.println(pump_run_until);
 
   // valve mapped from port 2 to 8 (1=pump, 2=reserved)
   current_active_valve = valve;

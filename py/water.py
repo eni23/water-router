@@ -4,7 +4,7 @@ import sys
 import time
 import serial
 
-ADDRESS = 13
+ADDRESS = 12
 PORT    = "/dev/ttyUSB0"
 BAUD    = 57600
 

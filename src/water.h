@@ -8,6 +8,8 @@ extern void inc_flowcount();
 
 extern void stop_water();
 
+extern void btn_isr();
+
 extern bool water(uint8_t valve, uint32_t amount_ml );
 
 
